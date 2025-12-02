@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Kendi hook'umuzu kullanıyoruz
+import { useAuth } from '../../context/AuthContext';
 
-const LoginPage = () => {
+const AdminLoginPage = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -10,7 +10,7 @@ const LoginPage = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // AuthContext'ten login fonksiyonunu al
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -25,10 +25,10 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(formData);
-      navigate('/'); // Başarılı giriş sonrası anasayfaya yönlendir
+      await login(formData, true);
+      navigate('/admin/dashboard');
     } catch (err) {
-      console.error('Giriş hatası:', err.response ? err.response.data : err.message);
+      console.error('Admin giriş hatası:', err.response ? err.response.data : err.message);
       setError(err.response?.data || 'Giriş yapılamadı. Kullanıcı adı veya şifre hatalı.');
     } finally {
       setLoading(false);
@@ -38,13 +38,13 @@ const LoginPage = () => {
   return (
     <div className="flex justify-center items-center py-10">
       <form onSubmit={handleSubmit} className="w-full max-w-md bg-white shadow-md rounded-lg p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">Giriş Yap</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Admin Girişi</h2>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         
         <div className="mb-4">
           <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
-            Kullanıcı Adı
+            Admin Kullanıcı Adı
           </label>
           <input 
             type="text" 
@@ -73,7 +73,7 @@ const LoginPage = () => {
         <button 
           type="submit"
           disabled={loading}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-gray-400"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-gray-400"
         >
           {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
         </button>
@@ -82,4 +82,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default AdminLoginPage;
