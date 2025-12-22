@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { searchProducts } from '../services/productService';
 import ProductCard from '../components/ProductCard';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
+import { FaSearch } from 'react-icons/fa';
 
 const SearchResultsPage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchParams] = useSearchParams();
-  
+
   const query = searchParams.get('q');
 
   useEffect(() => {
@@ -34,18 +37,34 @@ const SearchResultsPage = () => {
     fetchSearchResults();
   }, [query]);
 
-  if (loading) return <div>Yükleniyor...</div>;
-  if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6">
-        Arama Sonuçları: <span className="text-yellow-500">{query}</span>
-      </h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 animate-fadeIn">
+      {/* Header Section */}
+      <div className="mb-8 border-b border-slate-100 pb-6">
+        <p className="text-slate-500 font-medium mb-1">Arama Sonuçları</p>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-900">
+          "{query}" <span className="text-slate-400 text-2xl font-normal">için {searchResults.length} sonuç bulundu</span>
+        </h1>
+      </div>
+
       {searchResults.length === 0 ? (
-        <p>Aradığınız kritere uygun ürün bulunamadı.</p>
+        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+          <div className="bg-white p-6 rounded-full shadow-sm mb-6">
+            <FaSearch className="text-4xl text-slate-300" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-700 mb-2">Sonuç Bulunamadı</h2>
+          <p className="text-slate-500 max-w-md text-center mb-8">
+            "{query}" aramasıyla eşleşen ürün bulamadık. Lütfen farklı anahtar kelimelerle tekrar deneyin veya kategorilerimize göz atın.
+          </p>
+          <Link to="/" className="bg-slate-900 text-white font-bold py-3 px-8 rounded-xl hover:bg-slate-800 transition-colors shadow-lg hover:shadow-slate-900/20">
+            Anasayfaya Dön
+          </Link>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
           {searchResults.map((product) => (
             <ProductCard key={product.productId} product={product} />
           ))}

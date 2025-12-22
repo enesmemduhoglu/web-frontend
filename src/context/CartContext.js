@@ -36,7 +36,7 @@ export const CartProvider = ({ children }) => {
     }
   }, [getUserIdFromToken]);
 
-  const addToCart = async (productId) => {
+  const addToCart = async (productId, quantity = 1) => {
     const userId = getUserIdFromToken();
     if (!userId) {
       alert("Lütfen önce giriş yapın.");
@@ -44,9 +44,30 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      await addToCartApi(productId, userId, 1);
-      fetchCart(); 
-      alert("Ürün sepete eklendi!");
+      await addToCartApi(productId, userId, quantity);
+
+      const response = await getCartByUserId(userId);
+      const newCartItems = response.data;
+
+      // Check if quantity increased
+      const oldItem = cartItems.find(i => i.productId === productId);
+      const oldQty = oldItem ? oldItem.quantity : 0;
+
+      const newItem = newCartItems.find(i => i.productId === productId);
+      const newQty = newItem ? newItem.quantity : 0;
+
+      setCartItems(newCartItems); // Update state directly
+
+      if (newQty > oldQty) {
+        const addedAmount = newQty - oldQty;
+        if (addedAmount < quantity) {
+          alert(`Sepet limiti nedeniyle sadece ${addedAmount} adet ürün eklendi.`);
+        } else {
+          alert("Ürün sepete eklendi!");
+        }
+      } else {
+        alert("Ürün sepete eklenemedi. Sepetinizdeki maksimum ürün adedine ulaşmış olabilirsiniz.");
+      }
     } catch (error) {
       console.error("Sepete eklenirken hata oluştu:", error);
       alert("Ürün sepete eklenemedi.");

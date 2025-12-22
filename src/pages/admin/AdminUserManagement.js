@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { getAllUsers, deleteUser } from '../../services/userService';
 import { Link } from 'react-router-dom';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaUserCircle, FaSearch, FaUserShield, FaUser } from 'react-icons/fa';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
 
 const AdminUserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -29,7 +32,7 @@ const AdminUserManagement = () => {
     if (window.confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")) {
       try {
         await deleteUser(id);
-        fetchUsers(); 
+        fetchUsers();
         alert("Kullanıcı başarıyla silindi.");
       } catch (err) {
         setError("Kullanıcı silinirken bir hata oluştu.");
@@ -38,49 +41,98 @@ const AdminUserManagement = () => {
     }
   };
 
-  if (loading) return <div>Yükleniyor...</div>;
-  if (error) return <div className="text-red-500 text-center p-4">{error}</div>;
+  const filteredUsers = users.filter(user =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.firstName && user.firstName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <div className="p-8"><ErrorMessage message={error} /></div>;
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6">Kullanıcı Yönetimi</h1>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900">Kullanıcı Yönetimi</h1>
+          <p className="text-slate-500 mt-1">Sistemdeki kayıtlı kullanıcıları ve yetkilerini yönetin.</p>
+        </div>
+      </div>
 
-      <div className="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kullanıcı Adı</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Soyad</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map(user => (
-              <tr key={user.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.username}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.firstName} {user.lastName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                  }`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <Link to={`/admin/users/edit/${user.id}`} className="text-indigo-600 hover:text-indigo-900 p-1">
-                    <FaEdit size={18} />
-                  </Link>
-                  <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-900 p-1">
-                    <FaTrash size={18} />
-                  </button>
-                </td>
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Kullanıcı Ara..."
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-yellow-400 transition-all font-medium"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Kullanıcı</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">İsim</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">İşlemler</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-slate-100">
+              {filteredUsers.map(user => (
+                <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                        <FaUserCircle className="text-2xl" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{user.username}</div>
+                        <div className="text-xs text-slate-400">ID: {user.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 inline-flex items-center gap-1 text-xs leading-5 font-bold rounded-full ${user.role === 'ADMIN'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-blue-100 text-blue-800'
+                      }`}>
+                      {user.role === 'ADMIN' ? <FaUserShield className="text-xs" /> : <FaUser className="text-xs" />}
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
+                    {user.firstName} {user.lastName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <Link
+                        to={`/admin/users/edit/${user.id}`}
+                        className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                        title="Düzenle"
+                      >
+                        <FaEdit size={16} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                        title="Sil"
+                      >
+                        <FaTrash size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
